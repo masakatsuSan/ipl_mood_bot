@@ -1,0 +1,1253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>IPL AI Mood Bot</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&family=JetBrains+Mono:wght@400;600&display=swap');
+
+  :root {
+    --bg: #F5F0E8;
+    --surface: #FFFFFF;
+    --surface2: #F0EBE0;
+    --border: rgba(0,0,0,0.08);
+    --border-glow: rgba(5,150,80,0.4);
+    --green: #059650;
+    --green-dim: #047A40;
+    --green-light: rgba(5,150,80,0.10);
+    --red: #DC2626;
+    --amber: #D97706;
+    --blue: #1D4ED8;
+    --text: #1A1A1A;
+    --muted: #7A7060;
+    --subtle: #D8D0C0;
+    --ipl-orange: #FF6B00;
+    --ipl-gold: #C9A227;
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Stadium-like background texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 70% 45% at 50% -5%, rgba(5,150,80,0.12) 0%, transparent 55%),
+      radial-gradient(ellipse 50% 35% at 90% 100%, rgba(201,162,39,0.10) 0%, transparent 50%),
+      radial-gradient(ellipse 40% 30% at 5% 80%, rgba(255,107,0,0.06) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Subtle cricket pitch lines */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,0,0,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,0,0,0.025) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrap {
+    position: relative;
+    z-index: 1;
+    max-width: 740px;
+    margin: 0 auto;
+    padding: 0 20px 60px;
+  }
+
+  /* ── HEADER ── */
+  header {
+    padding: 40px 0 28px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    border-bottom: 2px solid var(--border);
+    margin-bottom: 36px;
+    position: relative;
+  }
+
+  /* Decorative cricket wicket accent line */
+  header::before {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    width: 120px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--ipl-orange), var(--ipl-gold));
+    border-radius: 2px;
+  }
+
+  .eyebrow {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--green);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .eyebrow::before {
+    content: '';
+    width: 20px;
+    height: 1.5px;
+    background: var(--ipl-orange);
+    border-radius: 2px;
+  }
+
+  h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(42px, 8vw, 64px);
+    line-height: 0.9;
+    letter-spacing: 1px;
+    color: #1A1A1A;
+    text-shadow: 2px 2px 0px rgba(0,0,0,0.06);
+  }
+  h1 span {
+    color: var(--ipl-orange);
+    position: relative;
+  }
+
+  /* Underline accent on "Mood" */
+  h1 span::after {
+    content: '';
+    position: absolute;
+    bottom: 4px;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--ipl-orange), var(--ipl-gold));
+    border-radius: 2px;
+  }
+
+  .header-meta {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 400;
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .header-meta::before {
+    content: '🏏';
+    font-size: 13px;
+  }
+
+  .live-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(220,38,38,0.08);
+    border: 1.5px solid rgba(220,38,38,0.25);
+    border-radius: 100px;
+    padding: 7px 16px;
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--red);
+    letter-spacing: 1.5px;
+    align-self: flex-start;
+    margin-top: 8px;
+    box-shadow: 0 2px 8px rgba(220,38,38,0.10);
+  }
+  .live-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--red);
+    animation: pulse 1.5s ease-in-out infinite;
+    box-shadow: 0 0 6px rgba(220,38,38,0.5);
+  }
+  @keyframes pulse {
+    0%,100%{opacity:1;transform:scale(1)}
+    50%{opacity:0.4;transform:scale(0.7)}
+  }
+
+  /* ── PLAYER MARQUEE STRIP ── */
+  .player-strip {
+    background: linear-gradient(135deg, #1A1A1A 0%, #2D2418 100%);
+    border-radius: 14px;
+    padding: 14px 20px;
+    margin-bottom: 28px;
+    display: flex;
+    align-items: center;
+    gap: 0;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid rgba(201,162,39,0.3);
+    box-shadow: 0 4px 24px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.08);
+  }
+  .player-strip::before {
+    content: '🏆';
+    font-size: 20px;
+    margin-right: 14px;
+    flex-shrink: 0;
+  }
+  .strip-label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--ipl-gold);
+    margin-right: 14px;
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .strip-scroll {
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+  }
+  .strip-scroll::before, .strip-scroll::after {
+    content: '';
+    position: absolute;
+    top: 0; bottom: 0;
+    width: 30px;
+    z-index: 2;
+  }
+  .strip-scroll::before { left: 0; background: linear-gradient(90deg, #1A1A1A, transparent); }
+  .strip-scroll::after  { right: 0; background: linear-gradient(-90deg, #1A1A1A, transparent); }
+  .strip-inner {
+    display: flex;
+    gap: 0;
+    animation: marquee 22s linear infinite;
+    white-space: nowrap;
+  }
+  .strip-player {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 0 20px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #E8DFC8;
+    border-right: 1px solid rgba(255,255,255,0.08);
+  }
+  .strip-player .flag { font-size: 14px; }
+  .strip-player .team-tag {
+    font-size: 9px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--ipl-gold);
+    letter-spacing: 1px;
+    background: rgba(201,162,39,0.12);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+  @keyframes marquee {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  /* ── API CARD ── */
+  .api-card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 16px;
+    padding: 20px 24px;
+    margin-bottom: 28px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  }
+  .api-card.saved {
+    border-color: var(--border-glow);
+    box-shadow: 0 4px 20px rgba(5,150,80,0.10);
+  }
+  .key-icon {
+    width: 42px; height: 42px;
+    background: linear-gradient(135deg, rgba(5,150,80,0.10), rgba(5,150,80,0.05));
+    border: 1.5px solid rgba(5,150,80,0.20);
+    border-radius: 11px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+    box-shadow: 0 2px 8px rgba(5,150,80,0.08);
+  }
+  .api-inner { flex: 1; min-width: 0; }
+  .api-label {
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .api-row { display: flex; gap: 8px; }
+  .api-row input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 9px;
+    padding: 9px 14px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    min-width: 0;
+  }
+  .api-row input:focus {
+    outline: none;
+    border-color: rgba(5,150,80,0.5);
+    box-shadow: 0 0 0 3px rgba(5,150,80,0.08);
+  }
+  .api-row input::placeholder { color: var(--muted); }
+  .btn-save {
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 9px;
+    padding: 9px 18px;
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .btn-save:hover {
+    border-color: var(--green);
+    color: var(--green);
+    background: var(--green-light);
+  }
+  .api-tip { font-size: 11px; color: var(--muted); margin-top: 7px; }
+  .api-tip a { color: var(--green-dim); text-decoration: none; font-weight: 500; }
+  .api-tip a:hover { color: var(--green); }
+  .saved-indicator {
+    display: none;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    color: var(--green);
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+  .saved-indicator.show { display: flex; }
+
+  /* ── SECTION LABEL ── */
+  .section-label {
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, var(--border), transparent);
+  }
+
+  /* ── INPUT ZONE ── */
+  .input-zone {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+  }
+  .input-zone:focus-within {
+    border-color: rgba(5,150,80,0.35);
+    box-shadow: 0 0 0 4px rgba(5,150,80,0.06), 0 12px 40px rgba(0,0,0,0.10);
+  }
+  .input-zone textarea {
+    width: 100%;
+    background: transparent;
+    border: none;
+    padding: 24px 28px 16px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.6;
+    resize: none;
+    height: 110px;
+  }
+  .input-zone textarea:focus { outline: none; }
+  .input-zone textarea::placeholder { color: var(--muted); font-weight: 300; }
+  .input-bottom {
+    padding: 12px 16px 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border-top: 1.5px solid var(--border);
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; flex: 1; }
+  .chip {
+    background: var(--surface2);
+    border: 1.5px solid var(--border);
+    border-radius: 100px;
+    padding: 5px 13px;
+    font-size: 11px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'DM Sans', sans-serif;
+    white-space: nowrap;
+    font-weight: 500;
+  }
+  .chip:hover {
+    border-color: var(--ipl-orange);
+    color: var(--ipl-orange);
+    background: rgba(255,107,0,0.06);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(255,107,0,0.12);
+  }
+  .btn-go {
+    background: linear-gradient(135deg, var(--ipl-orange) 0%, #FF8C00 100%);
+    color: #fff;
+    border: none;
+    border-radius: 12px;
+    width: 52px; height: 52px;
+    font-size: 22px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+    box-shadow: 0 4px 16px rgba(255,107,0,0.30);
+  }
+  .btn-go:hover {
+    transform: scale(1.06);
+    box-shadow: 0 6px 24px rgba(255,107,0,0.45);
+  }
+  .btn-go:active { transform: scale(0.97); }
+  .btn-go:disabled {
+    background: var(--subtle);
+    color: var(--muted);
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  /* ── ERROR ── */
+  .error-box {
+    display: none;
+    background: rgba(220,38,38,0.05);
+    border: 1.5px solid rgba(220,38,38,0.20);
+    border-radius: 12px;
+    padding: 14px 18px;
+    font-size: 13px;
+    color: #DC2626;
+    margin-bottom: 24px;
+    font-family: 'JetBrains Mono', monospace;
+    line-height: 1.5;
+  }
+
+  /* ── LOADING ── */
+  .loading { display: none; padding: 48px; text-align: center; }
+  .loading-ring {
+    width: 48px; height: 48px;
+    border: 2.5px solid rgba(0,0,0,0.08);
+    border-top-color: var(--ipl-orange);
+    border-right-color: var(--ipl-gold);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading p {
+    font-size: 13px;
+    color: var(--muted);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 1px;
+  }
+
+  /* ── RESPONSE CARD ── */
+  .response-card {
+    display: none;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1.5px solid var(--border);
+    margin-bottom: 32px;
+    animation: slideUp 0.5s cubic-bezier(0.16,1,0.3,1);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.10);
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .mood-header {
+    padding: 28px 32px;
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Big decorative circle */
+  .mood-header::after {
+    content: '';
+    position: absolute;
+    right: -50px; top: -50px;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.15);
+  }
+
+  /* Second decorative circle */
+  .mood-header::before {
+    content: '';
+    position: absolute;
+    right: 60px; bottom: -30px;
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+  }
+
+  /* Light theme mood backgrounds — vivid but light */
+  .mood-intense {
+    background: linear-gradient(135deg, #FFF0F0 0%, #FFD6DA 100%);
+    border-bottom: 2px solid rgba(220,38,38,0.18);
+  }
+  .mood-comfortable {
+    background: linear-gradient(135deg, #F0FDF4 0%, #BBFFD8 100%);
+    border-bottom: 2px solid rgba(5,150,80,0.18);
+  }
+  .mood-tense {
+    background: linear-gradient(135deg, #FFFBEB 0%, #FDE68A 100%);
+    border-bottom: 2px solid rgba(217,119,6,0.20);
+  }
+  .mood-unknown {
+    background: linear-gradient(135deg, #EFF6FF 0%, #BFDBFE 100%);
+    border-bottom: 2px solid rgba(29,78,216,0.15);
+  }
+
+  .mood-emoji {
+    font-size: 56px;
+    line-height: 1;
+    position: relative;
+    z-index: 1;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.15));
+  }
+  .mood-info { position: relative; z-index: 1; }
+  .mood-tag {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    opacity: 0.7;
+  }
+  .mood-intense .mood-tag     { color: #991B1B; }
+  .mood-comfortable .mood-tag { color: #065F46; }
+  .mood-tense .mood-tag       { color: #92400E; }
+  .mood-unknown .mood-tag     { color: #1E3A8A; }
+
+  .mood-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 40px;
+    letter-spacing: 2px;
+    line-height: 1;
+  }
+  .mood-intense .mood-title     { color: #B91C1C; }
+  .mood-comfortable .mood-title { color: #047857; }
+  .mood-tense .mood-title       { color: #B45309; }
+  .mood-unknown .mood-title     { color: #1D4ED8; }
+
+  .response-body { background: var(--surface); }
+  .resp-block { padding: 24px 32px; border-bottom: 1.5px solid var(--border); }
+  .resp-block:last-child { border-bottom: none; }
+  .resp-label {
+    font-size: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .resp-label-dot { width: 5px; height: 5px; border-radius: 50%; }
+  .commentary-dot { background: var(--green); }
+  .prediction-dot { background: var(--blue); }
+  .resp-text { font-size: 16px; line-height: 1.75; font-weight: 400; }
+  .commentary-text {
+    color: #1A4A2E;
+    font-style: italic;
+    font-size: 17px;
+    font-weight: 500;
+    background: rgba(5,150,80,0.04);
+    border-left: 3px solid var(--green);
+    padding: 12px 16px;
+    border-radius: 0 8px 8px 0;
+  }
+  .prediction-text {
+    color: #1E3A5F;
+    font-weight: 400;
+  }
+
+  /* ── HISTORY ── */
+  .history-section { margin-top: 36px; display: none; }
+  .history-item {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 14px 20px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: all 0.2s;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+  }
+  .history-item:hover {
+    border-color: var(--ipl-gold);
+    transform: translateX(3px);
+    box-shadow: 0 3px 14px rgba(0,0,0,0.08);
+  }
+  .h-mood-pill {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    padding: 4px 10px;
+    border-radius: 100px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    font-weight: 600;
+  }
+  .pill-intense     { background: rgba(220,38,38,0.08); color: #B91C1C; border: 1.5px solid rgba(220,38,38,0.20); }
+  .pill-comfortable { background: rgba(5,150,80,0.08); color: #047857; border: 1.5px solid rgba(5,150,80,0.20); }
+  .pill-tense       { background: rgba(217,119,6,0.08); color: #B45309; border: 1.5px solid rgba(217,119,6,0.20); }
+  .h-input { font-size: 13px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* ── FOOTER ── */
+  footer {
+    text-align: center;
+    padding: 32px 0 0;
+    border-top: 2px solid var(--border);
+    margin-top: 40px;
+    position: relative;
+  }
+  footer::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--ipl-orange), var(--ipl-gold));
+    border-radius: 2px;
+  }
+  .footer-logo {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 13px;
+    letter-spacing: 3px;
+    color: var(--muted);
+  }
+  .footer-logo span { color: var(--ipl-orange); }
+  .footer-sub { font-size: 11px; color: var(--muted); margin-top: 4px; font-weight: 400; }
+
+  /* ── VIDEO HERO ── */
+  .video-hero {
+    position: relative;
+    width: 100%;
+    border-radius: 20px;
+    overflow: hidden;
+    margin-bottom: 32px;
+    aspect-ratio: 16/7;
+    box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+    border: 2px solid rgba(201,162,39,0.25);
+  }
+  .video-hero iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+    pointer-events: none;
+    transform: scale(1.08);
+  }
+  .video-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to bottom,
+      rgba(245,240,232,0.10) 0%,
+      rgba(0,0,0,0.35) 60%,
+      rgba(0,0,0,0.72) 100%
+    );
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding: 22px 28px;
+  }
+  .video-caption {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(22px, 5vw, 34px);
+    letter-spacing: 2px;
+    color: #fff;
+    line-height: 1.1;
+    text-shadow: 0 2px 12px rgba(0,0,0,0.5);
+  }
+  .video-caption span { color: var(--ipl-gold); }
+  .video-sub {
+    font-size: 12px;
+    color: rgba(255,255,255,0.65);
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 2px;
+    margin-top: 4px;
+    text-transform: uppercase;
+  }
+  /* Decorative corner badges */
+  .video-badge-tl, .video-badge-tr {
+    position: absolute;
+    top: 14px;
+    z-index: 3;
+    background: rgba(0,0,0,0.55);
+    backdrop-filter: blur(6px);
+    border-radius: 100px;
+    padding: 5px 12px;
+    font-size: 11px;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 1.5px;
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+  .video-badge-tl { left: 14px; color: var(--ipl-gold); border-color: rgba(201,162,39,0.4); }
+  .video-badge-tr { right: 14px; display: flex; align-items: center; gap: 6px; }
+  .vbadge-dot { width: 6px; height: 6px; border-radius: 50%; background: #ef4444; animation: pulse 1.5s ease-in-out infinite; box-shadow: 0 0 6px rgba(239,68,68,0.6); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <div class="eyebrow">GDG Siliguri · Agentic Premier League</div>
+      <h1>IPL AI<br><span>Mood</span> Bot</h1>
+      <div class="header-meta">Powered by Google Gemini · Built in 2 hours</div>
+    </div>
+    <div class="live-badge"><div class="live-dot"></div>LIVE</div>
+  </header>
+
+  <!-- IPL STAR PLAYERS MARQUEE -->
+  <div class="player-strip">
+    <div class="strip-label">IPL 2026 Stars</div>
+    <div class="strip-scroll">
+      <div class="strip-inner">
+        <div class="strip-player"><span class="flag">🇮🇳</span> Virat Kohli <span class="team-tag">RCB</span></div>
+        <div class="strip-player"><span class="flag">🇦🇺</span> Pat Cummins <span class="team-tag">SRH</span></div>
+        <div class="strip-player"><span class="flag">🇮🇳</span> Rohit Sharma <span class="team-tag">MI</span></div>
+        <div class="strip-player"><span class="flag">🇦🇺</span> Travis Head <span class="team-tag">SRH</span></div>
+        <div class="strip-player"><span class="flag">🇮🇳</span> MS Dhoni <span class="team-tag">CSK</span></div>
+        <div class="strip-player"><span class="flag">🇳🇿</span> Kane Williamson <span class="team-tag">GT</span></div>
+        <div class="strip-player"><span class="flag">🇮🇳</span> Jasprit Bumrah <span class="team-tag">MI</span></div>
+        <div class="strip-player"><span class="flag">🏴󠁧󠁢󠁥󠁮󠁧󠁿</span> Jos Buttler <span class="team-tag">RR</span></div>
+        <div class="strip-player"><span class="flag">🇮🇳</span> Shubman Gill <span class="team-tag">GT</span></div>
+        <div class="strip-player"><span class="flag">🇿🇦</span> Quinton de Kock <span class="team-tag">LSG</span></div>
+        <div class="strip-player"><span class="flag">🇮🇳</span> Virat Kohli <span class="team-tag">RCB</span></div>
+        <div class="strip-player"><span class="flag">🇦🇺</span> Pat Cummins <span class="team-tag">SRH</span></div>
+        <div class="strip-player"><span class="flag">🇮🇳</span> Rohit Sharma <span class="team-tag">MI</span></div>
+        <div class="strip-player"><span class="flag">🇦🇺</span> Travis Head <span class="team-tag">SRH</span></div>
+        <div class="strip-player"><span class="flag">🇮🇳</span> MS Dhoni <span class="team-tag">CSK</span></div>
+        <div class="strip-player"><span class="flag">🇳🇿</span> Kane Williamson <span class="team-tag">GT</span></div>
+        <div class="strip-player"><span class="flag">🇮🇳</span> Jasprit Bumrah <span class="team-tag">MI</span></div>
+        <div class="strip-player"><span class="flag">🏴󠁧󠁢󠁥󠁮󠁧󠁿</span> Jos Buttler <span class="team-tag">RR</span></div>
+        <div class="strip-player"><span class="flag">🇮🇳</span> Shubman Gill <span class="team-tag">GT</span></div>
+        <div class="strip-player"><span class="flag">🇿🇦</span> Quinton de Kock <span class="team-tag">LSG</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIVE SCORE CARD -->
+  <div class="live-score-card" id="liveScoreCard">
+    <div class="lsc-header">
+      <div class="lsc-title-row">
+        <span class="lsc-pulse-dot"></span>
+        <span class="lsc-label">Live IPL Score</span>
+      </div>
+      <div class="lsc-refresh" id="lscMeta">Fetching...</div>
+    </div>
+    <div class="lsc-body" id="lscBody">
+      <div class="lsc-loading">
+        <div class="lsc-spinner"></div>
+        <span>Connecting to live scores...</span>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    /* ── LIVE SCORE CARD (light theme) ── */
+    .live-score-card {
+      background: var(--surface);
+      border: 1.5px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+      margin-bottom: 28px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.07);
+      animation: slideUp 0.5s cubic-bezier(0.16,1,0.3,1);
+    }
+    .lsc-header {
+      background: linear-gradient(135deg, #1A1A1A 0%, #2D1A00 100%);
+      padding: 12px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .lsc-title-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .lsc-pulse-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #ef4444;
+      box-shadow: 0 0 8px rgba(239,68,68,0.7);
+      animation: pulse 1.5s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+    .lsc-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+      color: var(--ipl-gold);
+    }
+    .lsc-refresh {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 9px;
+      color: rgba(255,255,255,0.3);
+      letter-spacing: 1px;
+    }
+    .lsc-body { padding: 20px 24px; }
+
+    /* Loading state */
+    .lsc-loading {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: 13px;
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: 1px;
+    }
+    .lsc-spinner {
+      width: 16px; height: 16px;
+      border: 2px solid var(--border);
+      border-top-color: var(--ipl-orange);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      flex-shrink: 0;
+    }
+
+    /* Live match layout */
+    .lsc-match-title {
+      font-size: 10px;
+      font-family: 'JetBrains Mono', monospace;
+      letter-spacing: 2px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 16px;
+    }
+    .lsc-teams {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .lsc-team { flex: 1; }
+    .lsc-team-name {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      letter-spacing: 2px;
+      color: var(--muted);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .lsc-team-score {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 48px;
+      line-height: 1;
+      color: var(--text);
+      letter-spacing: 1px;
+    }
+    .lsc-team-score .wkts {
+      font-size: 24px;
+      color: var(--muted);
+    }
+    .lsc-team-overs {
+      font-size: 11px;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+      margin-top: 3px;
+    }
+    .lsc-divider {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+    .lsc-vs-text {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 18px;
+      color: var(--subtle);
+      letter-spacing: 2px;
+    }
+    .lsc-vs-line {
+      width: 1px;
+      height: 40px;
+      background: var(--border);
+    }
+    .lsc-status-row {
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1.5px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .lsc-status-text {
+      font-size: 13px;
+      color: var(--ipl-orange);
+      font-style: italic;
+      font-weight: 500;
+    }
+    .lsc-crr-badge {
+      background: rgba(255,107,0,0.08);
+      border: 1.5px solid rgba(255,107,0,0.18);
+      border-radius: 100px;
+      padding: 3px 12px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 10px;
+      color: var(--ipl-orange);
+      letter-spacing: 1px;
+    }
+
+    /* No match state */
+    .lsc-no-match {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .lsc-no-match-left .lsc-nm-big {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 28px;
+      color: var(--text);
+      letter-spacing: 2px;
+      line-height: 1;
+    }
+    .lsc-no-match-left .lsc-nm-sub {
+      font-size: 11px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--muted);
+      letter-spacing: 1.5px;
+      margin-top: 4px;
+    }
+    .lsc-upcoming-fixtures {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .lsc-fixture {
+      background: var(--surface2);
+      border: 1.5px solid var(--border);
+      border-radius: 12px;
+      padding: 10px 16px;
+      text-align: center;
+      transition: all 0.2s;
+    }
+    .lsc-fixture:hover {
+      border-color: var(--ipl-gold);
+      box-shadow: 0 3px 12px rgba(201,162,39,0.12);
+    }
+    .lsc-fixture-teams {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 18px;
+      color: var(--text);
+      letter-spacing: 1px;
+    }
+    .lsc-fixture-time {
+      font-size: 9px;
+      font-family: 'JetBrains Mono', monospace;
+      color: var(--muted);
+      letter-spacing: 1.5px;
+      margin-top: 3px;
+    }
+  </style>
+
+  <script>
+    async function fetchLiveScore() {
+      const body = document.getElementById('lscBody');
+      const meta = document.getElementById('lscMeta');
+      try {
+        const res = await fetch('https://cricket-api.vercel.app/cri.php?url=https://www.cricbuzz.com/cricket-match/live-scores', { signal: AbortSignal.timeout(7000) });
+        const text = await res.text();
+        let data;
+        try { data = JSON.parse(text); } catch { data = null; }
+        if (data && data.matches && data.matches.length > 0) {
+          const ipl = data.matches.find(m => m.title && (m.title.includes('IPL') || m.title.includes('Indian Premier'))) || data.matches[0];
+          renderLiveMatch(ipl, body);
+        } else {
+          renderNoMatch(body);
+        }
+      } catch(e) {
+        renderNoMatch(body);
+      }
+      const now = new Date();
+      meta.textContent = 'Updated ' + now.toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'}) + ' · 30s refresh';
+    }
+
+    function renderLiveMatch(m, body) {
+      if (!m) { renderNoMatch(body); return; }
+      const score = m.score || m.current || '';
+      const status = m.status || m.matchStatus || '';
+      const title = m.title || m.series || 'IPL 2026';
+      const parts = score.split('•').map(s => s.trim()).filter(Boolean);
+
+      if (parts.length >= 2) {
+        const t1 = parseTeam(parts[0]);
+        const t2 = parseTeam(parts[1]);
+        body.innerHTML = `
+          <div class="lsc-match-title">${title}</div>
+          <div class="lsc-teams">
+            <div class="lsc-team">
+              <div class="lsc-team-name">${t1.name}</div>
+              <div class="lsc-team-score">${t1.runs}<span class="wkts">/${t1.wkts}</span></div>
+              <div class="lsc-team-overs">${t1.overs} overs</div>
+            </div>
+            <div class="lsc-divider">
+              <div class="lsc-vs-line"></div>
+              <div class="lsc-vs-text">VS</div>
+              <div class="lsc-vs-line"></div>
+            </div>
+            <div class="lsc-team" style="text-align:right;">
+              <div class="lsc-team-name" style="text-align:right;">${t2.name}</div>
+              <div class="lsc-team-score">${t2.runs}<span class="wkts">/${t2.wkts}</span></div>
+              <div class="lsc-team-overs" style="text-align:right;">${t2.overs} overs</div>
+            </div>
+          </div>
+          ${status ? `<div class="lsc-status-row"><div class="lsc-status-text">${status}</div><div class="lsc-crr-badge">🏏 LIVE</div></div>` : ''}
+        `;
+      } else {
+        body.innerHTML = `<div class="lsc-match-title">${title}</div><div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--text);">${score}</div>${status ? `<div class="lsc-status-text" style="margin-top:8px;">${status}</div>` : ''}`;
+      }
+    }
+
+    function parseTeam(str) {
+      const m = str.match(/([A-Z][A-Z\s&]+?)\s+(\d+)\/(\d+)\s*\(([^)]+)\)/);
+      if (m) return { name: m[1].trim(), runs: m[2], wkts: m[3], overs: m[4] };
+      return { name: str.substring(0, 12), runs: '—', wkts: '—', overs: '—' };
+    }
+
+    function renderNoMatch(body) {
+      body.innerHTML = `
+        <div class="lsc-no-match">
+          <div class="lsc-no-match-left">
+            <div class="lsc-nm-big">No Live Match</div>
+            <div class="lsc-nm-sub">IPL 2026 · Next fixtures</div>
+          </div>
+          <div class="lsc-upcoming-fixtures">
+            <div class="lsc-fixture">
+              <div class="lsc-fixture-teams">MI vs RCB</div>
+              <div class="lsc-fixture-time">7:30 PM IST</div>
+            </div>
+            <div class="lsc-fixture">
+              <div class="lsc-fixture-teams">CSK vs KKR</div>
+              <div class="lsc-fixture-time">TBD</div>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    fetchLiveScore();
+    setInterval(fetchLiveScore, 30000);
+  </script>
+
+  <div class="api-card" id="apiCard">
+    <div class="key-icon">🔑</div>
+    <div class="api-inner">
+      <div class="api-label">Gemini API Key</div>
+      <div class="api-row">
+        <input type="password" id="apiKey" placeholder="AIza••••••••••••••••••••••••••" />
+        <button class="btn-save" onclick="saveKey()">Save</button>
+      </div>
+      <div class="api-tip">Free key → <a href="https://aistudio.google.com" target="_blank">aistudio.google.com</a></div>
+    </div>
+    <div class="saved-indicator" id="savedInd">✓ SAVED</div>
+  </div>
+
+  <div class="section-label">Match Situation</div>
+  <div class="input-zone">
+    <textarea id="matchInput" placeholder="What just happened? e.g. Virat smashed 3 sixes in a row, RCB need 40 off last 3 overs…"></textarea>
+    <div class="input-bottom">
+      <div class="chips">
+        <div class="chip" onclick="useChip('3 wickets in 1 over, team collapsing!')">💥 Collapse</div>
+        <div class="chip" onclick="useChip('6 sixes in a row, crowd going crazy!')">🔥 Six storm</div>
+        <div class="chip" onclick="useChip('Need 40 off last 3 overs')">⚡ Death overs</div>
+        <div class="chip" onclick="useChip('Maiden over, very slow pitch today')">😴 Dead pitch</div>
+        <div class="chip" onclick="useChip('Last ball, 6 needed to win!')">🎯 Thriller</div>
+      </div>
+      <button class="btn-go" id="goBtn" onclick="analyzeMatch()">→</button>
+    </div>
+  </div>
+
+  <div class="error-box" id="errorBox"></div>
+
+  <div class="loading" id="loading">
+    <div class="loading-ring"></div>
+    <p>analyzing match...</p>
+  </div>
+
+  <div class="response-card" id="responseCard">
+    <div class="mood-header" id="moodHeader">
+      <div class="mood-emoji" id="moodEmoji">🏏</div>
+      <div class="mood-info">
+        <div class="mood-tag" id="moodTag">MATCH MOOD</div>
+        <div class="mood-title" id="moodTitle">—</div>
+      </div>
+    </div>
+    <div class="response-body">
+      <div class="resp-block">
+        <div class="resp-label"><div class="resp-label-dot commentary-dot"></div>Live Commentary</div>
+        <div class="resp-text commentary-text" id="commentary">—</div>
+      </div>
+      <div class="resp-block">
+        <div class="resp-label"><div class="resp-label-dot prediction-dot"></div>5-Over Prediction</div>
+        <div class="resp-text prediction-text" id="prediction">—</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="history-section" id="historySection">
+    <div class="section-label">Previous Analyses</div>
+    <div id="historyList"></div>
+  </div>
+
+  <footer>
+    <div class="footer-logo">IPL AI <span>Mood Bot</span></div>
+    <div class="footer-sub">GDG Siliguri · Agentic Premier League 2026</div>
+  </footer>
+</div>
+
+<script>
+  let history = [];
+
+  function saveKey() {
+    const k = document.getElementById('apiKey').value.trim();
+    if (!k) { showError('Please enter your API key!'); return; }
+    sessionStorage.setItem('gkey', k);
+    document.getElementById('apiCard').classList.add('saved');
+    document.getElementById('savedInd').classList.add('show');
+    hideError();
+  }
+  function getKey() {
+    return document.getElementById('apiKey').value.trim() || sessionStorage.getItem('gkey') || '';
+  }
+  function useChip(txt) { document.getElementById('matchInput').value = txt; }
+  function showError(msg) {
+    const b = document.getElementById('errorBox');
+    b.textContent = '× ' + msg;
+    b.style.display = 'block';
+  }
+  function hideError() { document.getElementById('errorBox').style.display = 'none'; }
+
+  async function analyzeMatch() {
+    const key = getKey();
+    const input = document.getElementById('matchInput').value.trim();
+    if (!key) { showError('Paste your Gemini API key and hit Save first!'); return; }
+    if (!input) { showError('Describe what\'s happening in the match!'); return; }
+    hideError();
+    const btn = document.getElementById('goBtn');
+    btn.disabled = true; btn.textContent = '…';
+    document.getElementById('loading').style.display = 'block';
+    document.getElementById('responseCard').style.display = 'none';
+
+    const prompt = `You are a witty, dramatic IPL cricket commentator. Given this match situation: "${input}"
+Respond ONLY as raw JSON (no markdown, no backticks):
+{"commentary":"2-3 sentence exciting live commentary using cricket slang. Be dramatic!","mood":"ONE word only: INTENSE or COMFORTABLE or TENSE","prediction":"Bold specific prediction for next 5 overs."}`;
+
+    try {
+      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${key}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+      });
+      const data = await res.json();
+      if (data.error) { showError(data.error.message); return; }
+
+      const raw = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+      let parsed;
+      try { parsed = JSON.parse(raw.replace(/```json|```/g,'').trim()); }
+      catch { showError('Unexpected response format. Try again.'); return; }
+
+      const mood = (parsed.mood || '').toUpperCase();
+      const moodMap = {
+        INTENSE:     { emoji:'🔥', cls:'mood-intense',     label:'INTENSE',     pillCls:'pill-intense' },
+        COMFORTABLE: { emoji:'😎', cls:'mood-comfortable', label:'COMFORTABLE', pillCls:'pill-comfortable' },
+        TENSE:       { emoji:'😬', cls:'mood-tense',       label:'TENSE',       pillCls:'pill-tense' },
+      };
+      const m = moodMap[mood] || { emoji:'📊', cls:'mood-unknown', label:mood||'ANALYZING', pillCls:'pill-comfortable' };
+
+      document.getElementById('moodHeader').className = 'mood-header ' + m.cls;
+      document.getElementById('moodEmoji').textContent = m.emoji;
+      document.getElementById('moodTitle').textContent = m.label;
+      document.getElementById('commentary').textContent = parsed.commentary || '—';
+      document.getElementById('prediction').textContent = parsed.prediction || '—';
+      document.getElementById('responseCard').style.display = 'block';
+
+      history.unshift({ input, label: m.label, pillCls: m.pillCls });
+      renderHistory();
+    } catch(err) {
+      showError('Network error: ' + err.message);
+    } finally {
+      btn.disabled = false; btn.textContent = '→';
+      document.getElementById('loading').style.display = 'none';
+    }
+  }
+
+  function renderHistory() {
+    const sec = document.getElementById('historySection');
+    const list = document.getElementById('historyList');
+    if (!history.length) { sec.style.display='none'; return; }
+    sec.style.display = 'block';
+    list.innerHTML = history.slice(0,5).map(h => `
+      <div class="history-item">
+        <div class="h-mood-pill ${h.pillCls}">${h.label}</div>
+        <div class="h-input">${h.input}</div>
+      </div>`).join('');
+  }
+
+  document.getElementById('matchInput').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); analyzeMatch(); }
+  });
+</script>
+</body>
+</html>
